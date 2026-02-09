@@ -1,0 +1,305 @@
+# PitCrew AI 🚨🏎️
+
+### Autonomous SRE System Built with MCP-Orchestrated Agents
+
+PitCrew AI is an autonomous Site Reliability Engineering (SRE) platform designed to detect, diagnose, and remediate production incidents safely using AI agents.
+
+This project is being built as part of an advanced systems-focused hackathon with the goal of demonstrating **real-world AI infrastructure orchestration**, not just chatbot capabilities.
+
+The architecture emphasizes:
+
+* Control-plane vs Data-plane separation
+* Safe automation
+* Observability-driven decisions
+* Governed remediation
+* Production-style failure simulation
+
+---
+
+# 🎯 Project Vision
+
+Modern infrastructure demands intelligent automation — but unsafe autonomy can be catastrophic.
+
+PitCrew AI aims to answer a critical question:
+
+> **Can AI operate production systems safely?**
+
+Instead of building a simple AI assistant, this project focuses on creating a **structured operational system** where agents:
+
+1. Detect system failures
+2. Investigate root causes
+3. Consult operational knowledge
+4. Validate actions against policy
+5. Execute remediation
+6. Generate incident reports
+
+The long-term goal is to simulate a production-grade autonomous SRE.
+
+---
+
+# 🧠 Core Architectural Principle
+
+## Control Plane vs Data Plane
+
+This project intentionally separates system responsibilities:
+
+### ✅ Data Plane (Workload)
+
+The production system being monitored.
+
+Currently includes:
+
+* A dockerized Flask API
+* Health monitoring endpoint
+* Controlled failure triggers
+
+### ✅ Control Plane (Operator)
+
+The intelligence layer that observes and controls the system.
+
+Currently includes:
+
+* Chaos simulation script
+* Docker command execution from host
+* External system control
+
+This mirrors real-world infrastructure patterns used by Kubernetes and cloud platforms.
+
+---
+
+# 🏗️ What Was Built — Day 1 Foundation
+
+Day 1 focused entirely on building a **realistic, controllable production environment**.
+
+Before creating AI agents, it is critical to have a system that can:
+
+✅ fail predictably
+✅ recover reliably
+✅ expose health signals
+
+Without this foundation, observability and remediation cannot be demonstrated convincingly.
+
+---
+
+# 🐳 Dockerized Production Service
+
+A lightweight Flask API was containerized to act as the "production workload."
+
+## Why Docker?
+
+Docker ensures the service runs in a consistent environment across machines by packaging:
+
+* Application code
+* Dependencies
+* Runtime
+* OS layer
+
+This eliminates the classic deployment issue:
+
+> "It works on my machine."
+
+---
+
+## Container Behavior
+
+### Healthy State
+
+```
+/health → HTTP 200 OK
+```
+
+### Failed State
+
+```
+/health → HTTP 500 SERVICE UNHEALTHY
+```
+
+Failure is triggered via a filesystem flag:
+
+```
+broken.flag
+```
+
+This allows deterministic outage simulation.
+
+---
+
+# 💥 Chaos Engineering Setup
+
+To simulate realistic production incidents, a control script was created:
+
+## chaos.py
+
+Runs on the **host machine**, not inside the container.
+
+This is intentional.
+
+### Why?
+
+Production systems should never self-destruct.
+
+Failures must be triggered externally — just like real infrastructure where operators or unexpected events impact services.
+
+This enforces proper architectural separation:
+
+### Control Plane → manages
+
+### Data Plane → executes
+
+---
+
+## Chaos Capabilities
+
+### Break the Service
+
+Creates `broken.flag` inside the container, forcing the health endpoint to return 500.
+
+### Restore the Service
+
+Removes the flag and returns the system to healthy status.
+
+---
+
+## Example Flow
+
+Simulate outage:
+
+```
+python chaos.py
+> break
+```
+
+Restore service:
+
+```
+python chaos.py
+> fix
+```
+
+This enables **one-command failure demos**, which are critical for reliable technical presentations.
+
+---
+
+# 📁 Current Project Structure
+
+```
+pitcrew-ai/
+│
+├── victim-app/
+│   ├── app.py
+│   ├── Dockerfile
+│   └── requirements.txt
+│
+├── chaos.py
+└── README.md
+```
+
+### victim-app
+
+Represents the production workload.
+
+### chaos.py
+
+Represents the external operator capable of controlling the system.
+
+---
+
+# 🧱 Key Engineering Decisions
+
+## Deterministic Failures
+
+Random crashes are bad for demos.
+
+Predictable failures enable reliable testing and presentation.
+
+---
+
+## Minimal Infrastructure
+
+Kubernetes was intentionally avoided to reduce resource overhead and increase development velocity.
+
+Docker provides sufficient realism without unnecessary complexity.
+
+---
+
+## Externalized Control
+
+Automation scripts remain outside the container to reflect real platform architecture patterns.
+
+---
+
+# 🔜 What Comes Next
+
+With a controllable production system in place, the next phase introduces intelligent observability.
+
+## Upcoming Component:
+
+### 🔧 Mechanic MCP Agent
+
+Responsibilities:
+
+* Inspect Docker containers
+* Read logs
+* Detect unhealthy services
+* Surface diagnostic signals
+
+This is where the system begins evolving from a container demo into an **AI-operated infrastructure platform.**
+
+Future agents will include:
+
+* Strategist → Runbook-powered RAG
+* Official → Policy validation
+* Risk Engine → Action scoring
+* Reporter → Automated postmortems
+
+---
+
+# 🚀 Long-Term Architecture (Target)
+
+```
+Incident Trigger
+      ↓
+Observability Agent
+      ↓
+Diagnosis
+      ↓
+Runbook Retrieval
+      ↓
+Policy Validation
+      ↓
+Risk Assessment
+      ↓
+Autonomous Remediation
+      ↓
+Incident Report
+```
+
+The objective is not to create a chatbot, but a **governed autonomous operator.**
+
+---
+
+# 💡 Why This Project Matters
+
+AI is rapidly gaining operational authority inside production environments.
+
+The challenge is no longer intelligence.
+
+It is **trust.**
+
+PitCrew AI explores how structured orchestration, policy enforcement, and risk-aware automation can make AI safe enough to operate critical systems.
+
+---
+
+# ✅ Day 1 Status
+
+✔ Dockerized production service
+✔ Health monitoring endpoint
+✔ Deterministic failure mechanism
+✔ Chaos simulation
+✔ Control/Data plane separation
+
+Foundation complete.
+
+The system is now ready for intelligent observability.
+
+---
