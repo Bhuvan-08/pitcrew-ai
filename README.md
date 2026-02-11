@@ -298,6 +298,60 @@ PitCrew AI explores how structured orchestration, policy enforcement, and risk-a
 ✔ Chaos simulation
 ✔ Control/Data plane separation
 
+## Day 2 — Autonomous Recovery Engine
+
+Day 2 upgraded **PitCrew AI** from a failure simulator into an **autonomous self-healing system**.
+
+It now runs a closed-loop workflow:
+
+**Failure → Diagnose → Decide → Remediate → Verify**
+
+aligned with real-world **SRE automation**.
+
+---
+
+### Architecture
+
+PitCrew introduces a **data plane / control plane** split:
+
+- **Data Plane:** Dockerized Flask workload with deterministic failure + health telemetry  
+- **Control Plane:** Mechanic MCP (FastAPI) + AI Driver for observability and execution  
+
+This keeps decisions external to workloads, like production infrastructure.
+
+---
+
+### Core Components
+
+**Mechanic MCP (Ops Layer)**  
+- Logs, inspect, restart, targeted recovery  
+- Executes actions, never decides  
+
+**AI Driver (Brain)**  
+- Collects telemetry  
+- Diagnoses via LLM  
+- Normalizes outputs into deterministic actions  
+- Executes remediation  
+- Verifies recovery  
+
+---
+
+### Key Engineering Wins
+
+- **Context engineering:** Only critical log signals go to the model  
+- **Deterministic actions:** Free text → stable commands  
+- **Root-cause recovery:** Remove failure trigger + restart, not blind reboot  
+
+---
+
+### Result
+
+PitCrew AI now performs **fully autonomous self-healing**:
+
+Chaos → Observe → Reason → Fix → Verify  
+
+with no human intervention, modeling real SRE behavior instead of a demo bot.
+
 Foundation complete.
 
 The system is now ready for intelligent observability.
