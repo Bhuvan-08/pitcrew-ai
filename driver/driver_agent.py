@@ -187,7 +187,15 @@ def autonomous_recovery():
 
     policy = check_policy(CONTAINER_NAME, action, severity)
 
-    print(policy)
+    print(f"""
+    🛡️ Governance Decision
+
+    Risk Score : {policy.get("risk_score")}
+    Rule       : {policy.get("rule_id")}
+    Reason     : {policy.get("reason")}
+    Approved   : {policy.get("approved")}
+    """)
+
 
     if policy.get("approved"):
         execute_recovery()
