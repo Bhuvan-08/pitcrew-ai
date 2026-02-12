@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 import subprocess
+import requests
+
+OFFICIAL_URL = "http://localhost:8002"
 
 app = FastAPI(title="PitCrew Mechanic MCP")
 
@@ -15,6 +18,16 @@ def run_docker_command(command: list[str]) -> str:
     )
     return result.stdout.strip() or result.stderr.strip()
 
+def check_policy(container, action, severity):
+    return requests.post(
+        f"{OFFICIAL_URL}/evaluate",
+        json={
+            "container": container,
+            "action": action,
+            "severity": severity
+        },
+        timeout=5
+    ).json()
 
 @app.get("/containers")
 def list_containers():
