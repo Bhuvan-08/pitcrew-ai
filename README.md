@@ -357,3 +357,85 @@ Foundation complete.
 The system is now ready for intelligent observability.
 
 ---
+
+
+## Day 3 — Governance Layer & Reliability Hardening
+
+Day 3 focused on transforming PitCrew from an autonomous recovery script into a governed infrastructure system by introducing policy enforcement, execution safety, and state-aware incident validation.
+
+### Key Architectural Upgrade
+Implemented a Policy Engine ("Official") to validate all remediation actions before execution.  
+This establishes a controlled workflow:
+
+Health → Diagnosis → Policy Evaluation → Approved Action → Recovery → Verification
+
+The system now demonstrates governed autonomy rather than unrestricted AI-driven execution.
+
+---
+
+### Policy Engine Integration
+- Built a dedicated FastAPI policy service.
+- Enforced approval checks before container remediation.
+- Introduced human-in-the-loop override for high-severity incidents.
+- Prevented direct LLM-to-infrastructure execution.
+
+This aligns the platform with real-world operational risk controls.
+
+---
+
+### Severity Normalization
+Detected a governance bypass caused by vocabulary drift (`CRITICAL` vs `HIGH`).  
+Implemented severity normalization to enforce a strict contract between the Driver and Policy Engine.
+
+Result:
+- Eliminated unintended auto-approvals.
+- Strengthened decision determinism.
+
+---
+
+### Deterministic Parsing
+Replaced fuzzy keyword detection with structured field extraction from LLM output.
+
+Benefits:
+- Reduced ambiguity in action selection.
+- Improved automation reliability.
+- Prevented prompt bleed from affecting execution.
+
+---
+
+### False Incident Prevention (Major Reliability Upgrade)
+Observed that historical Docker logs triggered recovery on healthy services.
+
+Added a **health pre-check gate** before running AI diagnosis:
+
+Live Service State → Validate → Diagnose (only if degraded)
+
+This shifted the system from log-driven behavior to state-aware incident response — a critical reliability pattern.
+
+---
+
+### Execution Safety Improvements
+- Added guarded recovery flow to prevent duplicate remediation.
+- Introduced safe request wrappers to handle service outages gracefully.
+- Hardened driver against dependency failures.
+
+The control plane now fails safely rather than unpredictably.
+
+---
+
+### Operational Traceability
+Added incident IDs to each response cycle, improving observability and aligning the system with real incident-management workflows.
+
+---
+
+### Outcome
+PitCrew now operates as a governed recovery platform with:
+
+- Policy-based execution control  
+- Human override for high-risk actions  
+- Deterministic AI behavior  
+- State-aware incident detection  
+- Hardened orchestration layer  
+
+This marks the transition from a prototype automation script to a reliability-oriented control plane.
+
