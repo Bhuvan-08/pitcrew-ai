@@ -439,3 +439,4 @@ PitCrew now operates as a governed recovery platform with:
 
 This marks the transition from a prototype automation script to a reliability-oriented control plane.
 
+feat(governance): add risk scoring, rule attribution, and audit trail
