@@ -440,3 +440,32 @@ PitCrew now operates as a governed recovery platform with:
 This marks the transition from a prototype automation script to a reliability-oriented control plane.
 
 feat(governance): add risk scoring, rule attribution, and audit trail
+
+
+# Day 4 — Runbook Intelligence & Decision Guidance
+
+Today focused on transforming **PitCrew** from an autonomous remediation system into a knowledge-guided reliability platform by introducing operational runbook intelligence.
+
+A dedicated **Strategist module** was implemented to retrieve relevant runbooks based on production log signatures. Instead of allowing the LLM to infer remediation steps independently, the system now prioritizes structured operational knowledge, significantly reducing hallucination risk and aligning behavior with real-world SRE practices.
+
+The runbooks were separated from application logic to enforce proper architectural boundaries — treating them as a knowledge base rather than executable code. This improves long-term scalability as additional services and runbooks are introduced.
+
+The **Driver Agent** was upgraded to incorporate runbook retrieval directly into the diagnostic prompt, explicitly instructing the model to prioritize documented procedures over free-form reasoning. This creates a governed decision flow:
+
+Logs → Runbook → Diagnosis → Governance → Mechanic → Recovery
+
+Console output was refined to follow a professional engineering style, removing excessive visual noise while clearly surfacing which subsystem (Strategist, Governance, Mechanic) is operating at each stage.
+
+## Key Outcomes from Day 4
+
+- Introduced the Strategist retrieval layer  
+- Implemented deterministic runbook matching  
+- Enforced runbook-first decision making inside the LLM prompt  
+- Hardened the Driver for stability and clarity  
+- Improved architectural separation between knowledge and execution layers  
+- Maintained health gating to prevent false incidents  
+- Preserved deterministic action mapping for safe automation  
+
+With this addition, PitCrew now behaves less like a reactive script and more like an internal reliability control plane capable of consulting operational doctrine before executing production actions.
+
+The system is now stable, explainable, and enterprise-aligned — ready for orchestration layer integration.
