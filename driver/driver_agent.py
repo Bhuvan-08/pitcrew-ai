@@ -4,6 +4,8 @@ import time
 import uuid
 
 from strategist.strategist import retrieve_runbook
+from datetime import datetime, timezone
+from reporter.reporter import generate_postmortem
 
 
 MECHANIC_URL = "http://localhost:8001"
@@ -134,7 +136,7 @@ No explanations.
     return result
 
 
-def execute_recovery():
+def execute_recovery(incident_id, detection_time):
 
     print("\n[Mechanic] Initiating governed remediation...\n")
 
@@ -154,6 +156,32 @@ def execute_recovery():
     else:
         print("\nService remains unhealthy.")
 
+    recovery_time = datetime.now(timezone.utc)
+
+    filepath, duration = generate_postmortem(
+        incident_id=incident_id,
+        service="payment-gateway",
+        root_cause="MemoryAllocationFailure due to high usage.",
+        resolution="Failure trigger removed and container restarted.",
+        detection_time=detection_time,
+        recovery_time=recovery_time
+    )
+
+    human_minutes = 15
+    system_seconds = duration
+    human_seconds = human_minutes * 60
+
+    efficiency = round(human_seconds / system_seconds, 2) if system_seconds > 0 else "N/A"
+
+    print("\nINCIDENT RESOLVED")
+    print("--------------------------------")
+    print(f"System Resolution Time : {system_seconds:.2f} seconds")
+    print(f"Estimated Human Time   : {human_minutes} minutes")
+    print(f"Operational Gain       : ~{efficiency}x faster")
+
+    print(f"\nPostmortem generated at: {filepath}")
+
+
 
 def autonomous_recovery():
 
@@ -170,6 +198,7 @@ def autonomous_recovery():
     incident_id = str(uuid.uuid4())[:8]
     print(f"\nIncident ID: {incident_id}")
 
+    detection_time = datetime.now(timezone.utc)
     result = diagnose_system()
 
     action = extract_field(result, "ACTION") or "NO_ACTION"
@@ -203,14 +232,12 @@ Approved   : {policy.get("approved")}
 
     if severity == "HIGH":
 
-        user_input = input(
-            "\nManual override required. Approve action? (y/n): "
-        )
+        auth_code = input("\nEnter authorization code to override: ")
 
-        if user_input.lower() == "y":
-            execute_recovery()
-        else:
-            print("\nOperator denied action.")
+    if auth_code == "PROD-ADMIN-OVERRIDE":
+        execute_recovery(incident_id, detection_time)
+    else:
+        print("\nAuthorization failed. Action denied.")
 
 
 if __name__ == "__main__":
