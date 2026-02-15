@@ -1,0 +1,53 @@
+version: '3.8'
+
+networks:
+  pitcrew-net:
+    driver: bridge
+
+services:
+  # 1. THE BRAIN: Archestra Platform
+  archestra:
+    image: archestra/platform:latest
+    container_name: archestra-platform
+    ports:
+      - "3000:3000"  # UI
+      - "9000:9000"  # API
+    environment:
+      - ARCHESTRA_QUICKSTART=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - archestra_data:/app/data
+    networks:
+      - pitcrew-net
+    depends_on:
+      - mechanic
+
+  # 2. THE HANDS: Mechanic MCP Server
+  mechanic:
+    build:
+      context: .
+      dockerfile: Dockerfile.mechanic
+    container_name: pitcrew-mechanic
+    ports:
+      - "8000:8000"  # Exposed for browser testing
+    environment:
+      - BASE_URL=http://production-payment-gateway:5000
+      - UVICORN_HOST=0.0.0.0
+      - UVICORN_PORT=8000
+      - PYTHONUNBUFFERED=1  # Important for logs
+    # Force python to run in unbuffered mode so logs show up
+    command: ["python", "mechanic/mcp_mechanic.py"]
+    networks:
+      - pitcrew-net
+
+  # 3. THE VICTIM: Payment Gateway
+  payment-service:
+    build: ./victim-app   # Matches your folder name
+    container_name: production-payment-gateway
+    ports:
+      - "5000:5000"  # Exposed so chaos.py (on host) can attack it
+    networks:
+      - pitcrew-net
+
+volumes:
+  archestra_data:

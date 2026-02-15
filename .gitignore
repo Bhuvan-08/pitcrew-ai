@@ -15,3 +15,5 @@ venv/
 
 coverage/
 htmlcov/
+
+reports/

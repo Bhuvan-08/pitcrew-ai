@@ -191,9 +191,7 @@ def autonomous_recovery():
         print("System healthy — no incident detected.")
         return
 
-    print("\n============================================================")
     print("PRODUCTION INCIDENT DETECTED — PitCrew Response Engine")
-    print("============================================================")
 
     incident_id = str(uuid.uuid4())[:8]
     print(f"\nIncident ID: {incident_id}")

@@ -1,2 +1,4 @@
-fastapi
+mcp
+requests
 uvicorn
+fastapi
