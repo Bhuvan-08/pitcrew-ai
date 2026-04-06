@@ -1,53 +1,29 @@
-version: '3.8'
-
-networks:
-  pitcrew-net:
-    driver: bridge
-
 services:
-  # 1. THE BRAIN: Archestra Platform
-  archestra:
-    image: archestra/platform:latest
-    container_name: archestra-platform
-    ports:
-      - "3000:3000"  # UI
-      - "9000:9000"  # API
-    environment:
-      - ARCHESTRA_QUICKSTART=true
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - archestra_data:/app/data
-    networks:
-      - pitcrew-net
-    depends_on:
-      - mechanic
-
-  # 2. THE HANDS: Mechanic MCP Server
   mechanic:
     build:
       context: .
       dockerfile: Dockerfile.mechanic
     container_name: pitcrew-mechanic
+    # 🗝️ THE FIX: Runs the container as root to bypass Windows/Docker Desktop socket security
+    user: root 
     ports:
-      - "8000:8000"  # Exposed for browser testing
-    environment:
-      - BASE_URL=http://production-payment-gateway:5000
-      - UVICORN_HOST=0.0.0.0
-      - UVICORN_PORT=8000
-      - PYTHONUNBUFFERED=1  # Important for logs
-    # Force python to run in unbuffered mode so logs show up
-    command: ["python", "mechanic/mcp_mechanic.py"]
+      - "8000:8000"
+    volumes:
+      # Mounts the host's Docker engine into the container so 'docker ps' works
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - pitcrew-net
 
-  # 3. THE VICTIM: Payment Gateway
-  payment-service:
-    build: ./victim-app   # Matches your folder name
+  payment-gateway:
+    build:
+      context: ./victim-app
+      dockerfile: Dockerfile
     container_name: production-payment-gateway
     ports:
-      - "5000:5000"  # Exposed so chaos.py (on host) can attack it
+      - "5000:5000"
     networks:
       - pitcrew-net
 
-volumes:
-  archestra_data:
+networks:
+  pitcrew-net:
+    driver: bridge
