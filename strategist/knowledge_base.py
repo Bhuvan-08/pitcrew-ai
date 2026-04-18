@@ -6,7 +6,7 @@ from sentence_transformers import SentenceTransformer
 # This converts our English runbooks into mathematical vectors (arrays of numbers)
 embedder = SentenceTransformer('all-MiniLM-L6-v2')
 
-# 2. Our SRE Knowledge Base (In a massive enterprise, these would be parsed Markdown files)
+# 2. Our SRE Knowledge Base (The Brain of the Agent)
 RUNBOOKS = [
     {
         "title": "Payment Gateway Chaos Outage",
@@ -15,6 +15,14 @@ RUNBOOKS = [
     {
         "title": "High Memory Usage Restarts",
         "content": "ERROR SIGNATURE: 'OOMKilled'. DIAGNOSIS: Container ran out of memory. MITIGATION: Restart the container and notify the backend team."
+    },
+    {
+        "title": "Silent CPU Starvation Policy",
+        "content": "SYMPTOM: Telemetry (stats) shows CPU usage pinned near or over 100%. DIAGNOSIS: The container is suffering from a thread lock, infinite loop, or CPU starvation chaos attack. This is a silent failure that will not appear in standard logs. MITIGATION: The official mitigation strategy is to execute the 'restart_container' tool to kill the rogue processes and flush the memory."
+    },
+    {
+        "title": "Catastrophic Crash / Missing Container Policy",
+        "content": "SYMPTOM: The list_containers audit shows the container is completely missing from the active list or stopped. DIAGNOSIS: A fatal kernel panic, OOM kill, or Node Failure has occurred. Do not attempt to read its logs or execute internal fixes like 'fix_container' as they will fail. MITIGATION: The official mitigation strategy for a missing or stopped container is to use the 'restart_container' tool to force it back online."
     }
 ]
 

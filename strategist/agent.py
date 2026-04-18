@@ -162,7 +162,7 @@ def extract_first_json(text):
     return None
 
 def run_agent(user_message, message_history):
-    """The Ultimate Autonomous ReAct loop with System Rejections & Chain-of-Thought."""
+    """The Ultimate Autonomous ReAct loop with System Rejections & Fault Tolerance."""
     
     messages = [
         {
@@ -173,18 +173,16 @@ def run_agent(user_message, message_history):
                 
                 "YOUR TOOLKIT:\n"
                 "- 'list_containers': Audit the fleet if a service is missing or down.\n"
-                "- 'get_container_logs': Investigate application crashes or text errors.\n"
-                "- 'get_container_stats': Investigate performance issues (High CPU/Memory).\n"
-                "- 'search_runbooks': Query the SRE knowledge base for mitigation policies.\n"
+                "- 'get_container_logs': Investigate text errors. WARNING: Logs will be empty during silent resource exhaustion attacks.\n"
+                "- 'get_container_stats': Investigate performance. CRITICAL RULE: If logs look clean but the user reports degradation, you MUST check stats for high CPU/Memory before searching runbooks.\n"
+                "- 'search_runbooks': Query the SRE knowledge base. CRITICAL: You MUST pass the exact error message or the specific metric (e.g., '100% CPU') as the search_query. Do not pass generic descriptions.\n"
                 "- 'fix_container' / 'restart_container': Execute mitigations.\n\n"
                 
-                "CRITICAL CHAIN-OF-THOUGHT RULE: You must NEVER guess the state of the infrastructure. "
-                "You must explicitly reason about your next step based on the facts provided by your tools.\n"
-                "Unless the incident is 100% resolved via a successful tool execution, your output MUST be formatted EXACTLY like this:\n"
-                "THOUGHT: [Write 1 sentence explaining what you are checking and why]\n"
-                '{"function": "tool_name", "parameters": {"param_name": "value"}}\n\n'
-                
-                "Only output normal conversational text WITHOUT JSON when you have definitively solved the problem."
+                "CRITICAL RULES OF ENGAGEMENT:\n"
+                "1. DO NOT WRITE PLANS. Do not tell the user what you are 'going to do'. Act immediately.\n"
+                "2. EXECUTE ONE TOOL AT A TIME using the native tool interface.\n"
+                "3. NEVER use XML, <function>, or backticks for tools.\n"
+                "4. Only output conversational text WITHOUT invoking tools when the system is 100% fixed."
             )
         }
     ]
@@ -194,12 +192,20 @@ def run_agent(user_message, message_history):
     print(f"\n🚀 --- NEW AGENT MISSION TRIGGERED ---")
 
     for step in range(8):
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=messages,
-            tools=TOOLS,
-            tool_choice="auto"
-        )
+        try:
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=messages,
+                tools=TOOLS,
+                tool_choice="auto"
+            )
+        except Exception as e:
+            print(f"⚠️ [API CIRCUIT BREAKER TRIGGERED]: Intercepted malformed LLM syntax. Forcing retry...")
+            messages.append({
+                "role": "user", 
+                "content": "SYSTEM REJECTION: Your API call failed due to bad syntax. Stop writing plans. Execute exactly ONE tool using the native interface."
+            })
+            continue 
 
         response_msg = response.choices[0].message
 
@@ -236,14 +242,15 @@ def run_agent(user_message, message_history):
                     parsed = json.loads(first_json_string)
 
                     if isinstance(parsed, dict):
-                        func_name = parsed.get("name") or parsed.get("function") or parsed.get("tool")
+                        # 🚨 THE FIX: Expanded the parser to catch 'function_name' hallucinations
+                        func_name = parsed.get("name") or parsed.get("function") or parsed.get("tool") or parsed.get("function_name")
                         
                         if func_name:
                             print(f"🧠 [STEP {step + 1}] JSON TOOL EXTRACTED -> {func_name}")
                             
-                            kwargs = parsed.get("parameters", {})
-                            if not kwargs:
-                                kwargs = {k: v for k, v in parsed.items() if k not in ["name", "function", "tool", "type"]}
+                            kwargs = parsed.get("parameters", {}) or parsed.get("args", {})
+                            if not kwargs or isinstance(kwargs, list):
+                                kwargs = {k: v for k, v in parsed.items() if k not in ["name", "function", "tool", "type", "function_name", "args"]}
 
                             tool_result = execute_tool(func_name, kwargs)
                             
@@ -266,7 +273,7 @@ def run_agent(user_message, message_history):
                 messages.append({"role": "assistant", "content": text_content})
                 messages.append({
                     "role": "user", 
-                    "content": "SYSTEM REJECTION: You just hallucinated. You did not use any tools to verify the system state. You MUST use a tool (like list_containers, get_container_stats, or get_container_logs) before you reply to the user!"
+                    "content": "SYSTEM REJECTION: You just hallucinated a plan instead of taking action. You MUST execute a tool (like list_containers) right now using native tool calling!"
                 })
                 continue 
 

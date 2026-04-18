@@ -1,4 +1,10 @@
-mcp
-requests
-uvicorn
 fastapi
+uvicorn
+requests
+docker
+schedule
+streamlit
+openai
+python-dotenv
+faiss-cpu
+sentence-transformers

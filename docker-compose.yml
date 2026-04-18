@@ -4,12 +4,10 @@ services:
       context: .
       dockerfile: Dockerfile.mechanic
     container_name: pitcrew-mechanic
-    # 🗝️ THE FIX: Runs the container as root to bypass Windows/Docker Desktop socket security
     user: root 
     ports:
       - "8000:8000"
     volumes:
-      # Mounts the host's Docker engine into the container so 'docker ps' works
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - pitcrew-net
@@ -21,6 +19,10 @@ services:
     container_name: production-payment-gateway
     ports:
       - "5000:5000"
+    labels:
+      - "pitcrew.app=payment-gateway"
+      - "pitcrew.env=production"
+      - "pitcrew.chaos.eligible=true"
     networks:
       - pitcrew-net
 
