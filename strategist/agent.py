@@ -87,6 +87,18 @@ TOOLS = [
                 "required": ["container_name"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "check_disk_space",
+            "description": "Checks the internal disk space (df -h) of a container to diagnose storage exhaustion.",
+            "parameters": {
+                "type": "object",
+                "properties": {"container_name": {"type": "string"}},
+                "required": ["container_name"]
+            }
+        }
     }
 ]
 
@@ -95,6 +107,10 @@ TOOLS = [
 # ==========================================
 def tool_list_containers(kwargs):
     return requests.get(f"{MECHANIC_URL}/containers").text
+
+def tool_check_disk_space(kwargs):
+    param = list(kwargs.values())[0] if kwargs else ""
+    return requests.get(f"{MECHANIC_URL}/containers/{param}/disk").text
 
 def tool_get_container_logs(kwargs):
     param = list(kwargs.values())[0] if kwargs else ""
@@ -127,7 +143,8 @@ TOOL_REGISTRY = {
     "search_runbooks": tool_search_runbooks,
     "fix_container": tool_fix_container,
     "get_container_stats": tool_get_container_stats,
-    "restart_container": tool_restart_container
+    "restart_container": tool_restart_container,
+    "check_disk_space": tool_check_disk_space
 }
 
 # ==========================================
@@ -174,24 +191,28 @@ def run_agent(user_message, message_history):
                 "YOUR TOOLKIT:\n"
                 "- 'list_containers': Audit the fleet if a service is missing or down.\n"
                 "- 'get_container_logs': Investigate text errors. WARNING: Logs will be empty during silent resource exhaustion attacks.\n"
-                "- 'get_container_stats': Investigate performance. CRITICAL RULE: If logs look clean but the user reports degradation, you MUST check stats for high CPU/Memory before searching runbooks.\n"
-                "- 'search_runbooks': Query the SRE knowledge base. CRITICAL: You MUST pass the exact error message or the specific metric (e.g., '100% CPU') as the search_query. Do not pass generic descriptions.\n"
+                "- 'get_container_stats': Investigate performance. CRITICAL RULE: If logs look clean but the user reports degradation, you MUST check stats.\n"
+                "- 'check_disk_space': Investigate disk usage. CRITICAL RULE: If 'get_container_stats' shows CPU and Memory are normal (e.g., under 80%), you MUST use this tool to check for disk exhaustion BEFORE searching runbooks.\n"
+                "- 'search_runbooks': Query the SRE knowledge base. CRITICAL: You MUST pass the exact error message or the specific metric (e.g., '100% CPU' or '100% Disk') as the search_query.\n"
                 "- 'fix_container' / 'restart_container': Execute mitigations.\n\n"
                 
                 "CRITICAL RULES OF ENGAGEMENT:\n"
-                "1. DO NOT WRITE PLANS. Do not tell the user what you are 'going to do'. Act immediately.\n"
-                "2. EXECUTE ONE TOOL AT A TIME using the native tool interface.\n"
-                "3. NEVER use XML, <function>, or backticks for tools.\n"
-                "4. Only output conversational text WITHOUT invoking tools when the system is 100% fixed."
+                "1. THINK THEN ACT: You may think out loud about your strategy, but you MUST immediately invoke the native tool API to take action. Do not invent fake syntax.\n"
+                "2. EXACT NAMES: Never guess a container_name. Always use the EXACT name found in the `list_containers` output.\n"
+                "3. ONE AT A TIME: Execute only one tool per step.\n"
+                "4. NO HALLUCINATIONS: Read the exact numbers from the tool results. If Memory is 85MB / 6000MB, that is NORMAL. Do not invent problems.\n"
+                "5. ALWAYS PULL FRESH DATA: Never rely on your chat history or past metrics. You MUST use your tools to pull fresh telemetry every single time the user issues a new command.\n"
+                "6. THE FALSE ALARM PROTOCOL: If you pull FRESH metrics and ALL of them are completely normal, DO NOT search runbooks and DO NOT execute a fix. Tell the user it is a false alarm.\n"
+                "7. THE ESCALATION PROTOCOL: If there IS a real anomaly, but the runbook search returns irrelevant results, DO NOT GUESS. Stop, explain the telemetry, and ask for permission.\n"
+                "8. Only output conversational text without invoking tools when the system is 100% fixed, when escalating, or when declaring a False Alarm."
             )
         }
     ]
-    messages.extend(message_history)
     messages.append({"role": "user", "content": user_message})
 
     print(f"\n🚀 --- NEW AGENT MISSION TRIGGERED ---")
 
-    for step in range(8):
+    for step in range(15):
         try:
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
@@ -219,13 +240,17 @@ def run_agent(user_message, message_history):
                 
                 kwargs = json.loads(tool_call.function.arguments)
                 tool_result = execute_tool(func_name, kwargs)
+                
+                # 🚨 ADD THIS LINE RIGHT HERE! Let's see what the backend actually said!
+                print(f"   ↳ 🔧 TOOL RESULT: {str(tool_result)[:150]}...")
+                
                 messages.append({
                     "role": "tool",
                     "tool_call_id": tool_call.id,
                     "name": func_name,
                     "content": str(tool_result)
                 })
-            continue 
+            continue
 
         # 🪂 PATH 2: THE BULLETPROOF STACK PARSER & HALLUCINATION CHECK
         elif response_msg.content:

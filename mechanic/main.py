@@ -71,5 +71,17 @@ def fix_container(container_name: str):
     except Exception as e:
         return f"System Error: {str(e)}"
 
+@app.get("/containers/{container_name}/disk")
+def check_disk_space(container_name: str):
+    """Executes 'df -h' to check for ephemeral storage exhaustion."""
+    try:
+        container = client.containers.get(container_name)
+        exit_code, output = container.exec_run("df -h")
+        if exit_code != 0:
+            return f"Failed to check disk: {output.decode('utf-8')}"
+        return output.decode('utf-8')
+    except Exception as e:
+        return f"System Error: {str(e)}"
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

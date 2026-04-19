@@ -23,6 +23,10 @@ RUNBOOKS = [
     {
         "title": "Catastrophic Crash / Missing Container Policy",
         "content": "SYMPTOM: The list_containers audit shows the container is completely missing from the active list or stopped. DIAGNOSIS: A fatal kernel panic, OOM kill, or Node Failure has occurred. Do not attempt to read its logs or execute internal fixes like 'fix_container' as they will fail. MITIGATION: The official mitigation strategy for a missing or stopped container is to use the 'restart_container' tool to force it back online."
+    },
+    {
+        "title": "Disk Exhaustion Policy",
+        "content": "SYMPTOM: Disk space check (df -h) shows /tmp or overlay at 100% usage. DIAGNOSIS: A runaway log file or data leak has exhausted the ephemeral storage. MITIGATION: The official mitigation strategy is to use the 'restart_container' tool to flush the ephemeral storage and restore service."
     }
 ]
 
